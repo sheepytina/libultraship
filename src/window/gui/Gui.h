@@ -91,7 +91,6 @@ class Gui {
     void ImGuiRenderDrawData(ImDrawData* data);
     ImTextureID GetTextureById(int32_t id);
     void ApplyResolutionChanges();
-    int16_t GetIntegerScaleFactor();
 
   private:
     struct GuiTexture {
