@@ -519,12 +519,10 @@ void Gui::ApplyResolutionChanges() {
 }
 
 int16_t Gui::GetIntegerScaleFactor() {
-    // bool compare_aspect_ratio =
-    //    ((float)gfx_current_game_window_viewport.width / gfx_current_game_window_viewport.height) >
-    //    ((float)gfx_current_dimensions.width / gfx_current_dimensions.height);
+    float current_dimensions_width_adjusted = (float)gfx_current_dimensions.width * GetPAR();
     bool compare_inverse_aspect_ratio =
         ((float)gfx_current_game_window_viewport.height / gfx_current_game_window_viewport.width) <
-        ((float)gfx_current_dimensions.height / gfx_current_dimensions.width);
+        ((float)gfx_current_dimensions.height / current_dimensions_width_adjusted);
 
     if (!CVarGetInteger("gAdvancedResolution.IntegerScale.FitAutomatically", 0)) {
         int16_t factor = CVarGetInteger("gAdvancedResolution.IntegerScale.Factor", 1);
@@ -572,6 +570,31 @@ int16_t Gui::GetIntegerScaleFactor() {
     }
 }
 
+// Advanced Resolution - Get Pixel Aspect Ratio.
+float Gui::GetPAR() {
+    // PAR is not exactly a useful setting for most N64 games, but making LUS capable of controlling it may be useful.
+    // PC and Emulators:                  1:1   = 1.000  (Default)
+    // MPEG-1 NTSC SIF:                  10:11  = 0.909  (TV reference standard. Not typically seen in N64 software.)
+    // N64 60Hz-320px-240p:             120:119 = 1.008  (Used by OoT and most N64 games, regardless of TV format.)
+    // N64 50Hz-320px-240p:             ____    =        (Used by PAL Super Mario 64. Shows black bars on real N64.)
+    // N64 60Hz anamorphic widescreen:  ____    =        (Widescreen in GoldenEye 007, Perfect Dark, Jet Force Gemini.)
+    //                                  tina do the math for these later
+    //
+    // Note that although GC/Wii software typically have a different PAR (10:11 = 0.909),
+    // from my tests, PAR is corrected to N64 accordingly in OoT GC, Virtual Console, etc.
+
+    float default_PAR = 1.0f;
+    float real_N64_PAR = 120.0f / 119.0f;
+    if (!CVarGetInteger("gAdvancedResolution.PAR.Enabled", 0)) {
+        return default_PAR;
+    }
+    float par = CVarGetFloat("gAdvancedResolution.PAR.Float", real_N64_PAR);
+    if (par < 0.001f) {
+        par = default_PAR;
+    }
+    return par;
+}
+
 void Gui::StartFrame() {
     const ImVec2 mainPos = ImGui::GetWindowPos();
     ImVec2 size = ImGui::GetContentRegionAvail();
@@ -583,8 +606,10 @@ void Gui::StartFrame() {
     } else if (CVarGetInteger("gAdvancedResolution.Enabled", 0)) {
         if (!CVarGetInteger("gAdvancedResolution.PixelPerfectMode", 0)) {
             if (!CVarGetInteger("gAdvancedResolution.IgnoreAspectCorrection", 0)) {
-                float sWdth = size.y * gfx_current_dimensions.width / gfx_current_dimensions.height;
-                float sHght = size.x * gfx_current_dimensions.height / gfx_current_dimensions.width;
+                float gWdth = (float)gfx_current_dimensions.width * GetPAR();
+                float gHght = (float)gfx_current_dimensions.height;
+                float sWdth = size.y * gWdth / gHght;
+                float sHght = size.x * gHght / gWdth;
                 float sPosX = size.x / 2 - sWdth / 2;
                 float sPosY = size.y / 2 - sHght / 2;
                 if (sPosY < 0.0f) { // pillarbox
@@ -600,10 +625,12 @@ void Gui::StartFrame() {
             }
         } else { // in pixel perfect mode it's much easier
             const int factor = GetIntegerScaleFactor();
-            float sPosX = size.x / 2 - (gfx_current_dimensions.width * factor) / 2;
-            float sPosY = size.y / 2 - (gfx_current_dimensions.height * factor) / 2;
+            float gWdth = (float)gfx_current_dimensions.width * GetPAR();
+            float gHght = (float)gfx_current_dimensions.height;
+            float sPosX = size.x / 2 - (gWdth * factor) / 2;
+            float sPosY = size.y / 2 - (gHght * factor) / 2;
             pos = ImVec2(sPosX, sPosY);
-            size = ImVec2(float(gfx_current_dimensions.width) * factor, float(gfx_current_dimensions.height) * factor);
+            size = ImVec2(gWdth * factor, gHght * factor);
         }
     }
     if (gfxFramebuffer) {
