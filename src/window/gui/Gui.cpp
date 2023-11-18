@@ -519,6 +519,13 @@ void Gui::ApplyResolutionChanges() {
 }
 
 int16_t Gui::GetIntegerScaleFactor() {
+    // bool compare_aspect_ratio =
+    //    ((float)gfx_current_game_window_viewport.width / gfx_current_game_window_viewport.height) >
+    //    ((float)gfx_current_dimensions.width / gfx_current_dimensions.height);
+    bool compare_inverse_aspect_ratio =
+        ((float)gfx_current_game_window_viewport.height / gfx_current_game_window_viewport.width) <
+        ((float)gfx_current_dimensions.height / gfx_current_dimensions.width);
+
     if (!CVarGetInteger("gAdvancedResolution.IntegerScale.FitAutomatically", 0)) {
         int16_t factor = CVarGetInteger("gAdvancedResolution.IntegerScale.Factor", 1);
 
@@ -526,8 +533,7 @@ int16_t Gui::GetIntegerScaleFactor() {
             // Screen bounds take priority over whatever Factor is set to.
 
             // The same comparison as below, but checked against the configured factor
-            if (((float)gfx_current_game_window_viewport.height / gfx_current_game_window_viewport.width) <
-                ((float)gfx_current_dimensions.height / gfx_current_dimensions.width)) {
+            if (compare_inverse_aspect_ratio) {
                 if (factor > gfx_current_game_window_viewport.height / gfx_current_dimensions.height) {
                     // Scale to window height
                     factor = gfx_current_game_window_viewport.height / gfx_current_dimensions.height;
@@ -548,8 +554,7 @@ int16_t Gui::GetIntegerScaleFactor() {
         int16_t factor = 1;
 
         // Compare aspect ratios of game framebuffer and GUI
-        if (((float)gfx_current_game_window_viewport.height / gfx_current_game_window_viewport.width) <
-            ((float)gfx_current_dimensions.height / gfx_current_dimensions.width)) {
+        if (compare_inverse_aspect_ratio) {
             // Scale to window height
             factor = gfx_current_game_window_viewport.height / gfx_current_dimensions.height;
         } else {
