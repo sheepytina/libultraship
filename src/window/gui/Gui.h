@@ -67,6 +67,7 @@ class Gui {
     void EndFrame();
     void RenderViewports();
     void DrawMenu();
+    void DynamicResolutionScaling(bool dropped_frame);
 
     void SaveConsoleVariablesOnNextTick();
     void Update(WindowEvent event);

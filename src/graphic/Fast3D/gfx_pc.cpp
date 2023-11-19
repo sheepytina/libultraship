@@ -3180,10 +3180,13 @@ void gfx_run(Gfx* commands, const std::unordered_map<Mtx*, MtxF>& mtx_replacemen
             LUS::Context::GetInstance()->GetWindow()->GetGui()->StartFrame();
             LUS::Context::GetInstance()->GetWindow()->GetGui()->EndFrame();
             has_drawn_imgui_menu = false;
+        } else {
+            LUS::Context::GetInstance()->GetWindow()->GetGui()->DynamicResolutionScaling(dropped_frame);
         }
         return;
     }
     dropped_frame = false;
+    LUS::Context::GetInstance()->GetWindow()->GetGui()->DynamicResolutionScaling(dropped_frame);
 
     if (!has_drawn_imgui_menu) {
         LUS::Context::GetInstance()->GetWindow()->GetGui()->DrawMenu();

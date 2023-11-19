@@ -464,6 +464,50 @@ void Gui::ImGuiWMNewFrame() {
     }
 }
 
+// A "dumb", reactive dynamic resolution scaling (DRS) function.
+void Gui::DynamicResolutionScaling(bool dropped_frame) {
+    static float mul_current = CVarGetFloat("gInternalResolution", 1.0f);
+
+    if (!CVarGetInteger("gAdvancedResolution.DRS.Enabled", 0) ||
+        (CVarGetInteger("gAdvancedResolution.VerticalResolutionToggle", 0) &&
+         CVarGetInteger("gAdvancedResolution.Enabled", 0))) {
+        mul_current = CVarGetFloat("gInternalResolution", 1.0f);
+        LUS::Context::GetInstance()->GetWindow()->SetResolutionMultiplier(mul_current);
+        return;
+    }
+
+    const float mul_upper = CVarGetFloat("gInternalResolution", 1.0f);
+    const float mul_lower = CVarGetFloat("gAdvancedResolution.DRS.LowerBounds", 0.5f);
+    const uint16_t fps_target = CVarGetInteger("gInterpolationFPS", 20);
+    // const float frametime_target = 1000.0f / fps_target; // measured in ms/frame
+
+    static uint16_t dropcounter = 0;
+    static int32_t framecounter = fps_target;
+
+    const float drs_base_rate = 0.05f;
+    const float drs_aggressiveness = drs_base_rate * CVarGetFloat("gAdvancedResolution.DRS.Aggressiveness", 1.0f);
+    const float drs_regen = drs_aggressiveness * (1.0f + (dropcounter * 0.25f));
+
+    if (dropped_frame) {
+        dropcounter++;
+        framecounter = fps_target;
+        mul_current -= drs_aggressiveness;
+    } else {
+        framecounter--;
+        if (framecounter <= 0) {
+            dropcounter = 0;
+            mul_current += drs_regen;
+        }
+    }
+    if (mul_current < mul_lower) {
+        mul_current = mul_lower;
+    }
+    if (mul_current > mul_upper) {
+        mul_current = mul_upper;
+    }
+    LUS::Context::GetInstance()->GetWindow()->SetResolutionMultiplier(mul_current);
+}
+
 void Gui::ApplyResolutionChanges() {
     ImVec2 size = ImGui::GetContentRegionAvail();
 
