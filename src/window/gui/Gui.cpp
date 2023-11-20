@@ -537,9 +537,9 @@ int16_t Gui::GetIntegerScaleFactor() {
                     factor = gfx_current_game_window_viewport.height / gfx_current_dimensions.height;
                 }
             } else {
-                if (factor > gfx_current_game_window_viewport.width / gfx_current_dimensions.width) {
+                if (factor > gfx_current_game_window_viewport.width / current_dimensions_width_adjusted) {
                     // Scale to window width
-                    factor = gfx_current_game_window_viewport.width / gfx_current_dimensions.width;
+                    factor = gfx_current_game_window_viewport.width / current_dimensions_width_adjusted;
                 }
             }
         }
@@ -557,7 +557,7 @@ int16_t Gui::GetIntegerScaleFactor() {
             factor = gfx_current_game_window_viewport.height / gfx_current_dimensions.height;
         } else {
             // Scale to window width
-            factor = gfx_current_game_window_viewport.width / gfx_current_dimensions.width;
+            factor = gfx_current_game_window_viewport.width / current_dimensions_width_adjusted;
         }
 
         // Add screen bounds offset, if set.
@@ -576,9 +576,8 @@ float Gui::GetPAR() {
     // PC and Emulators:                  1:1   = 1.000  (Default)
     // MPEG-1 NTSC SIF:                  10:11  = 0.909  (TV reference standard. Not typically seen in N64 software.)
     // N64 60Hz-320px-240p:             120:119 = 1.008  (Used by OoT and most N64 games, regardless of TV format.)
-    // N64 50Hz-320px-240p:             ____    =        (Used by PAL Super Mario 64. Shows black bars on real N64.)
-    // N64 60Hz anamorphic widescreen:  ____    =        (Widescreen in GoldenEye 007, Perfect Dark, Jet Force Gemini.)
-    //                                  tina do the math for these later
+    // N64 50Hz-320px-240p:        1.2*(120/119)= 1.2096 (Used by PAL Super Mario 64. Shows black bars on real N64.)
+    // N64 60Hz anamorphic widescreen:  ____    = 1.344  (Widescreen in GoldenEye 007, Perfect Dark, Jet Force Gemini.)
     //
     // Note that although GC/Wii software typically have a different PAR (10:11 = 0.909),
     // from my tests, PAR is corrected to N64 accordingly in OoT GC, Virtual Console, etc.
