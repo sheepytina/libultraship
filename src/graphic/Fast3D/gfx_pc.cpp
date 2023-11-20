@@ -3176,12 +3176,11 @@ void gfx_run(Gfx* commands, const std::unordered_map<Mtx*, MtxF>& mtx_replacemen
 
     if (!gfx_wapi->start_frame()) {
         dropped_frame = true;
+        LUS::Context::GetInstance()->GetWindow()->GetGui()->DynamicResolutionScaling(dropped_frame);
         if (has_drawn_imgui_menu) {
             LUS::Context::GetInstance()->GetWindow()->GetGui()->StartFrame();
             LUS::Context::GetInstance()->GetWindow()->GetGui()->EndFrame();
             has_drawn_imgui_menu = false;
-        } else {
-            LUS::Context::GetInstance()->GetWindow()->GetGui()->DynamicResolutionScaling(dropped_frame);
         }
         return;
     }

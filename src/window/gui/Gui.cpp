@@ -464,7 +464,7 @@ void Gui::ImGuiWMNewFrame() {
     }
 }
 
-// A reactive dynamic resolution scaling (DRS) function based around frame times.
+// A reactive dynamic resolution scaling (DRS) function.
 void Gui::DynamicResolutionScaling(bool dropped_frame) {
     static float mul_current = CVarGetFloat("gInternalResolution", 1.0f);
 
@@ -483,22 +483,38 @@ void Gui::DynamicResolutionScaling(bool dropped_frame) {
     const float frametime_target = 1000.0f / fps_target; // measured in ms/frame
     const float frametime_last = ImGui::GetIO().DeltaTime * 1000.0f; // time since last frame.
 
-    static uint16_t dropcounter = 0;
     static int32_t framecounter = fps_target;
+    static uint16_t dropcounter = 0;
+    const uint16_t change_threshold = 1;
+    static uint16_t wait_to_change = 0;
 
     const float drs_base_rate = 0.05f;
     const float drs_aggressiveness = drs_base_rate * CVarGetFloat("gAdvancedResolution.DRS.Aggressiveness", 1.0f);
     const float drs_regen = drs_aggressiveness * (1.0f + (dropcounter * 0.25f));
 
+    static float mul_dropped = mul_upper;
+
     if (dropped_frame) {
         dropcounter++;
         framecounter = fps_target;
-        mul_current -= drs_aggressiveness;
+        wait_to_change = 0;
+        mul_dropped -= drs_aggressiveness;
+        return;
     } else {
-        framecounter--;
-        if (framecounter <= 0) {
-            dropcounter = 0;
-            mul_current += drs_regen;
+        if (dropcounter > 0) {
+            if (wait_to_change >= change_threshold) {
+                dropcounter = 0;
+                mul_current = mul_dropped;
+                mul_dropped = mul_upper;
+            } else {
+                wait_to_change++;
+            }
+        } else {
+            framecounter--;
+            if (framecounter <= 0) {
+                dropcounter = 0;
+                mul_current += drs_regen;
+            }
         }
     }
     if (mul_current < mul_lower) {
