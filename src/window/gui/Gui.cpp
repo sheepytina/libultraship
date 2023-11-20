@@ -464,7 +464,7 @@ void Gui::ImGuiWMNewFrame() {
     }
 }
 
-// A "dumb", reactive dynamic resolution scaling (DRS) function.
+// A reactive dynamic resolution scaling (DRS) function based around frame times.
 void Gui::DynamicResolutionScaling(bool dropped_frame) {
     static float mul_current = CVarGetFloat("gInternalResolution", 1.0f);
 
@@ -479,7 +479,9 @@ void Gui::DynamicResolutionScaling(bool dropped_frame) {
     const float mul_upper = CVarGetFloat("gInternalResolution", 1.0f);
     const float mul_lower = CVarGetFloat("gAdvancedResolution.DRS.LowerBounds", 0.5f);
     const uint16_t fps_target = CVarGetInteger("gInterpolationFPS", 20);
-    // const float frametime_target = 1000.0f / fps_target; // measured in ms/frame
+
+    const float frametime_target = 1000.0f / fps_target; // measured in ms/frame
+    const float frametime_last = ImGui::GetIO().DeltaTime * 1000.0f; // time since last frame.
 
     static uint16_t dropcounter = 0;
     static int32_t framecounter = fps_target;
